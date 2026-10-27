@@ -1,10 +1,12 @@
-# Python
+# Python / uv
 __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
 .venvs/
 venv/
+.python-version.local
+uv-cache/
 
 # Training outputs
 outputs/
