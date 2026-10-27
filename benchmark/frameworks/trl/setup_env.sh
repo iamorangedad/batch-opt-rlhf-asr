@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
-# Setup a dedicated virtualenv for the TRL Whisper RL benchmark.
+# Setup the TRL Whisper RL benchmark environment with uv.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-ENV_DIR="${ROOT}/.venvs/trl"
-REQ="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/requirements.txt"
+cd "${ROOT}"
 
-echo "[trl] Creating venv at ${ENV_DIR}"
-python3 -m venv "${ENV_DIR}"
-# shellcheck disable=SC1091
-source "${ENV_DIR}/bin/activate"
+if ! command -v uv >/dev/null 2>&1; then
+  echo "[trl] uv not found; installing..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  # shellcheck disable=SC1091
+  source "${HOME}/.local/bin/env"
+fi
 
-python -m pip install --upgrade pip
-python -m pip install -r "${REQ}"
+echo "[trl] Syncing project env with uv (extra: trl)"
+uv python install "$(cat .python-version 2>/dev/null || echo 3.12)"
+uv sync --extra trl
 
-echo "[trl] Environment ready."
-echo "Activate with: source ${ENV_DIR}/bin/activate"
+echo "[trl] Environment ready at ${ROOT}/.venv"
+echo "Activate with: source .venv/bin/activate"
+echo "Or run via:    uv run ..."
 echo "Smoke test:    bash benchmark/frameworks/trl/run.sh smoke"
