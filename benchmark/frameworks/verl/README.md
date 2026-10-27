@@ -11,20 +11,16 @@ rollout_phase → reward_phase → update_phase
 
 ---
 
-## 1. 搭建测试环境
+## 1. 搭建测试环境（uv）
 
 ```bash
 bash benchmark/frameworks/verl/setup_env.sh
-source .venvs/verl/bin/activate
+# 等价: uv sync
+
+source .venv/bin/activate   # 可选；也可用 uv run
 
 # 可选完整 verl（decoder-only + FSDP/Megatron + vLLM）
-# pip install verl
-```
-
-或：
-
-```bash
-pip install -r benchmark/frameworks/verl/requirements.txt
+# uv pip install verl
 ```
 
 ---
