@@ -16,13 +16,18 @@ By optimizing data batch processing, this project reduces memory consumption by 
 - **verl** 风格单控制器 GRPO
 - **Native ORPO**（本仓库 `finetune.py` 基线）
 
-快速冒烟：
+Python 环境由 **uv** 管理（见 `pyproject.toml` / `uv.lock`）。
 
 ```bash
-pip install -r benchmark/requirements.txt
-python benchmark/scripts/generate_demo_data.py
-bash benchmark/scripts/run_benchmark.sh smoke trl,openrlhf,verl
+# 安装 uv 后同步依赖
+curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
+bash scripts/setup_uv.sh all
+
+uv run python benchmark/scripts/generate_demo_data.py
+uv run bash benchmark/scripts/run_benchmark.sh smoke trl,openrlhf,verl
 ```
+
+详细说明：[`benchmark/docs/uv_env.md`](benchmark/docs/uv_env.md)
 
 ## 🎯 Project Overview
 
@@ -51,33 +56,35 @@ By optimizing data batch processing, this project reduces memory consumption by 
 
 ```
 batch-opt-rlhf-asr/
+├── pyproject.toml           # uv project / dependency declaration
+├── uv.lock                  # locked dependency graph
+├── .python-version          # Python pin for uv
 ├── finetune.py              # Main training script
 ├── scripts/
-│   └── run_rlhf_asr.sh     # Training execution script
+│   ├── setup_uv.sh          # Bootstrap env with uv
+│   └── run_rlhf_asr.sh      # Training execution script
+├── benchmark/               # Multi-framework RL benchmark suite
 └── src/
-    ├── model.py            # Custom Whisper model implementation
-    ├── orpo_trainer.py     # ORPO trainer with custom loss
-    ├── data_reader.py      # Dataset loader for preference data
-    ├── data_utils.py       # Data processing utilities
-    └── utils.py            # General utility functions
+    ├── model.py             # Custom Whisper model implementation
+    ├── orpo_trainer.py      # ORPO trainer with custom loss
+    ├── data_reader.py       # Dataset loader for preference data
+    ├── data_utils.py        # Data processing utilities
+    └── utils.py             # General utility functions
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.8+
-- PyTorch 2.0+
-- Transformers
-- Datasets
-- Librosa
-- Soundfile
-- PEFT
+- [uv](https://docs.astral.sh/uv/)（推荐）
+- Python 3.10+（由 `.python-version` / uv 自动安装，默认 3.12）
 
 ### Installation
 
 ```bash
-pip install torch transformers datasets librosa soundfile peft
+curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
+bash scripts/setup_uv.sh all
+# 等价: uv sync --extra all --group dev
 ```
 
 ### Data Format
