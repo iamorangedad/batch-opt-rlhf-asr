@@ -1,7 +1,9 @@
 from typing import Optional, Tuple, Union
+import torch
 import torch.nn as nn
 from transformers import WhisperModel
 from transformers import WhisperConfig
+from transformers import WhisperForConditionalGeneration
 
 
 class CustomWhisperModel(WhisperModel):

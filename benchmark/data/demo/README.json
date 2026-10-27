@@ -1,0 +1,12 @@
+{
+  "note": "Synthetic tones for pipeline validation only \u2014 not real speech.",
+  "num_train": 8,
+  "num_eval": 4,
+  "files": [
+    "train_rl.jsonl",
+    "eval_rl.jsonl",
+    "train_pref.jsonl",
+    "eval_pref.jsonl",
+    "audio/"
+  ]
+}

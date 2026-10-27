@@ -89,8 +89,10 @@ class CustomDataset(Dataset):
         chosen = data_list["chosens"] if self.timestamps else data_list["chosen"]
         rejected = data_list["rejecteds"] if self.timestamps else data_list["rejected"]
         language = data_list["language"] if "language" in data_list.keys() else None
+        audio_file = data_list["audio"]["path"]
         sample, sample_rate = soundfile.read(audio_file, dtype="float32")
-        sample = sample.T
+        if getattr(sample, "ndim", 1) > 1:
+            sample = sample.T
         # to mono
         if self.mono:
             sample = librosa.to_mono(sample)

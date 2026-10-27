@@ -3,6 +3,27 @@
 A PyTorch implementation of Reinforcement Learning from Human Feedback (RLHF) for Automatic Speech Recognition (ASR) using the Whisper model. This project implements the ORPO (Odds Ratio Preference Optimization) algorithm to fine-tune Whisper models with preference data.
 By optimizing data batch processing, this project reduces memory consumption by more than 50%.
 
+## Whisper RL Fine-tuning Benchmark
+
+多框架强化学习微调 Whisper 的基准测试套件（环境搭建 / 测试脚本 / 测试流程）见：
+
+**[`benchmark/README.md`](benchmark/README.md)**
+
+覆盖框架：
+
+- **TRL**（GRPO / ORPO）
+- **OpenRLHF** 风格 PPO
+- **verl** 风格单控制器 GRPO
+- **Native ORPO**（本仓库 `finetune.py` 基线）
+
+快速冒烟：
+
+```bash
+pip install -r benchmark/requirements.txt
+python benchmark/scripts/generate_demo_data.py
+bash benchmark/scripts/run_benchmark.sh smoke trl,openrlhf,verl
+```
+
 ## 🎯 Project Overview
 
 This project enables fine-tuning of Whisper ASR models using preference-based learning, where the model learns to prefer high-quality transcriptions over low-quality ones. The implementation uses the ORPO algorithm, which is an efficient alternative to traditional RLHF methods.

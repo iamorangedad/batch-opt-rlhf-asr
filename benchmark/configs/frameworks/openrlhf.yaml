@@ -1,0 +1,21 @@
+# OpenRLHF — Ray + DeepSpeed / vLLM style pipeline (ASR adapter)
+framework: openrlhf
+algorithm: ppo
+extends: ../base.yaml
+
+openrlhf:
+  # Whisper is encoder-decoder; this adapter runs a colocated PPO loop
+  # that mirrors OpenRLHF's actor/ref/reward roles without requiring vLLM.
+  rollout_batch_size: 4
+  num_episodes: 2
+  ppo_epochs: 1
+  clip_eps: 0.2
+  kl_coef: 0.05
+  temperature: 0.7
+  num_generations: 4
+  use_ray: false              # set true when Ray cluster is available
+
+training:
+  output_dir: outputs/benchmark/openrlhf
+  learning_rate: 3.0e-6
+  max_steps: 30

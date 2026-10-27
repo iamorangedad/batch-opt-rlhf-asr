@@ -1,0 +1,13 @@
+# HuggingFace TRL — ORPO (offline preference optimization)
+framework: trl
+algorithm: orpo
+extends: ../base.yaml
+
+orpo:
+  beta: 0.1
+
+training:
+  output_dir: outputs/benchmark/trl_orpo
+  learning_rate: 1.0e-5
+  per_device_train_batch_size: 2
+  max_steps: 50
