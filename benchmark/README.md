@@ -2,9 +2,11 @@
 
 面向 **音频 ASR / Whisper** 的强化学习微调基准套件。为业界常见 RL 框架各自提供：
 
-1. **环境搭建**（`setup_env.sh` / `requirements.txt`）
+1. **环境搭建**（**uv** + `setup_env.sh` / `pyproject.toml`）
 2. **测试脚本**（训练 / 冒烟 / 评测）
 3. **测试流程**（数据准备 → 训练 → 指标对比）
+
+Python 依赖统一用 uv 管理，参见 [`docs/uv_env.md`](docs/uv_env.md)。
 
 > 说明：Whisper 是 **encoder-decoder**，而 OpenRLHF / verl / 部分 TRL trainer 主要面向 decoder-only LLM。本基准在统一奖励与数据协议上，为每个框架提供 **可运行的 Whisper 适配训练环**；大规模生产部署时可再挂接各框架原生的 Ray / vLLM / FSDP 后端。
 
@@ -36,16 +38,18 @@ benchmark/
 
 ## 快速开始（推荐路径）
 
-### 0. 依赖（最小 CPU/GPU 冒烟）
+### 0. 用 uv 搭建环境
 
 ```bash
-pip install torch transformers datasets accelerate peft librosa soundfile pyyaml tqdm numpy
+curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
+bash scripts/setup_uv.sh all
+# 按框架: bash scripts/setup_uv.sh trl|openrlhf|verl
 ```
 
 ### 1. 生成 demo 数据
 
 ```bash
-python benchmark/scripts/generate_demo_data.py
+uv run python benchmark/scripts/generate_demo_data.py
 ```
 
 > demo 音频是短正弦波，仅用于验证 **数据→训练→评测** 流水线。真实实验请用 `prepare_data.py` 接入 LibriSpeech / Common Voice。
@@ -67,7 +71,7 @@ bash benchmark/scripts/run_benchmark.sh smoke trl,openrlhf,verl
 ### 3. 对比结果
 
 ```bash
-python benchmark/scripts/compare_results.py --outputs_dir outputs/benchmark
+uv run python benchmark/scripts/compare_results.py --outputs_dir outputs/benchmark
 ```
 
 每个框架输出：
@@ -126,11 +130,12 @@ python benchmark/scripts/prepare_data.py \
 - [Native ORPO](frameworks/native_orpo/README.md)
 - [框架对比](docs/framework_comparison.md)
 - [数据格式](docs/data_format.md)
+- [uv 环境管理](docs/uv_env.md)
 
 ## 评测
 
 ```bash
-python benchmark/scripts/evaluate.py \
+uv run python benchmark/scripts/evaluate.py \
   --model_path outputs/benchmark/trl_grpo/checkpoint-final \
   --base_model openai/whisper-tiny \
   --eval_path benchmark/data/demo/eval_rl.jsonl
