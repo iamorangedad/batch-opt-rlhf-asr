@@ -5,20 +5,16 @@ OpenRLHF 是面向生产的 RLHF 框架（Ray 调度 + DeepSpeed/Megatron + vLLM
 
 ---
 
-## 1. 搭建测试环境
+## 1. 搭建测试环境（uv）
 
 ```bash
 bash benchmark/frameworks/openrlhf/setup_env.sh
-source .venvs/openrlhf/bin/activate
+# 等价: uv sync --extra openrlhf
+
+source .venv/bin/activate   # 可选；也可用 uv run
 
 # 可选：完整 OpenRLHF（decoder-only / 多机）
-# pip install openrlhf vllm
-```
-
-最小依赖：
-
-```bash
-pip install -r benchmark/frameworks/openrlhf/requirements.txt
+# uv pip install openrlhf vllm
 ```
 
 ---
