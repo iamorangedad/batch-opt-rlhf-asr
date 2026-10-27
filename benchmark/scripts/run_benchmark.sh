@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run smoke or full benchmarks across frameworks.
+# Run smoke or full benchmarks across frameworks (uv-managed env).
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${ROOT}"
@@ -7,10 +7,22 @@ cd "${ROOT}"
 MODE="${1:-smoke}"   # smoke | full
 FRAMEWORKS="${2:-trl,openrlhf,verl}"
 
+if ! command -v uv >/dev/null 2>&1; then
+  echo "[benchmark] uv not found; installing..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  # shellcheck disable=SC1091
+  source "${HOME}/.local/bin/env"
+fi
+
+if [[ ! -d "${ROOT}/.venv" ]]; then
+  echo "[benchmark] Syncing uv environment (extra: all)..."
+  uv sync --extra all
+fi
+
 IFS=',' read -r -a FW_ARR <<< "${FRAMEWORKS}"
 
 echo "[benchmark] Preparing demo data..."
-python benchmark/scripts/generate_demo_data.py
+uv run python benchmark/scripts/generate_demo_data.py
 
 run_one() {
   local fw="$1"
@@ -59,7 +71,7 @@ for fw in "${FW_ARR[@]}"; do
 done
 
 echo "[benchmark] Comparing results..."
-python benchmark/scripts/compare_results.py \
+uv run python benchmark/scripts/compare_results.py \
   --outputs_dir outputs/benchmark \
   --out outputs/benchmark/comparison.md || true
 
