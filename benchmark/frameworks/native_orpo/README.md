@@ -2,10 +2,11 @@
 
 基于仓库根目录 `finetune.py` + `src/orpo_trainer.py` 的 Whisper ORPO 实现，作为 **离线偏好优化基线**。
 
-## 1. 搭建环境
+## 1. 搭建环境（uv）
 
 ```bash
 bash benchmark/frameworks/native_orpo/run.sh setup
+# 等价: uv sync
 ```
 
 ## 2. 准备数据
