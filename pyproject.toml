@@ -1,0 +1,46 @@
+[project]
+name = "batch-opt-rlhf-asr"
+version = "0.1.0"
+description = "Whisper RL fine-tuning benchmark (TRL / OpenRLHF / verl / native ORPO)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "torch>=2.1.0",
+    "transformers>=4.40.0",
+    "datasets>=2.18.0",
+    "accelerate>=0.28.0",
+    "peft>=0.10.0",
+    "librosa>=0.10.0",
+    "soundfile>=0.12.0",
+    "pyyaml>=6.0",
+    "tqdm>=4.66.0",
+    "numpy>=1.24.0",
+    "jiwer>=3.0.0",
+    "zhconv>=1.4.0",
+]
+
+[project.optional-dependencies]
+# Framework extras: uv sync --extra trl
+trl = ["trl>=0.9.0"]
+openrlhf = [
+    "deepspeed>=0.14.0",
+    "ray>=2.9.0",
+]
+verl = []
+all = [
+    "batch-opt-rlhf-asr[trl,openrlhf]",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6.0",
+]
+
+[tool.uv]
+# Application / research repo: manage env with uv, do not build a wheel by default.
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
