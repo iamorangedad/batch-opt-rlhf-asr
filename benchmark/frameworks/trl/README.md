@@ -13,21 +13,20 @@
 
 ---
 
-## 1. 搭建测试环境
+## 1. 搭建测试环境（uv）
 
 ```bash
-# 方式 A：专用 venv
+# 推荐：仓库根目录用 uv 同步 trl extra
 bash benchmark/frameworks/trl/setup_env.sh
-source .venvs/trl/bin/activate
+# 等价: uv sync --extra trl
 
-# 方式 B：当前环境直接装
-pip install -r benchmark/frameworks/trl/requirements.txt
+source .venv/bin/activate   # 可选；也可用 uv run
 ```
 
 检查：
 
 ```bash
-python -c "import torch,transformers,peft,trl; print('ok', torch.__version__)"
+uv run python -c "import torch,transformers,peft,trl; print('ok', torch.__version__)"
 ```
 
 ---
