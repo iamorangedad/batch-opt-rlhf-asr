@@ -1,0 +1,45 @@
+# Shared defaults for Whisper RL benchmarks.
+model:
+  name_or_path: openai/whisper-tiny
+  language: en
+  task: transcribe
+  use_lora: true
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  target_modules: [q_proj, v_proj, k_proj, out_proj, fc1, fc2]
+
+data:
+  train_path: benchmark/data/demo/train_rl.jsonl
+  eval_path: benchmark/data/demo/eval_rl.jsonl
+  preference_train_path: benchmark/data/demo/train_pref.jsonl
+  preference_eval_path: benchmark/data/demo/eval_pref.jsonl
+  sample_rate: 16000
+  max_audio_seconds: 30
+  min_audio_seconds: 0.5
+
+reward:
+  wer_weight: 0.7
+  cer_weight: 0.3
+  length_penalty: 0.05
+  repetition_penalty: 0.1
+
+training:
+  output_dir: outputs/benchmark
+  seed: 42
+  learning_rate: 3.0e-6
+  num_train_epochs: 1
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 4
+  warmup_steps: 10
+  logging_steps: 5
+  save_steps: 50
+  eval_steps: 50
+  max_steps: 100
+  bf16: true
+  fp16: false
+  gradient_checkpointing: true
+
+eval:
+  metrics: [wer, cer]
+  max_new_tokens: 128
