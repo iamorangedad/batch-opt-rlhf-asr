@@ -1,0 +1,17 @@
+# Native ORPO trainer already in this repository (src/orpo_trainer.py)
+framework: native_orpo
+algorithm: orpo
+extends: ../base.yaml
+
+native_orpo:
+  alpha: 1.0
+  disable_prompt_loss: false
+  use_adalora: true
+  enable_lora: true
+
+training:
+  output_dir: outputs/benchmark/native_orpo
+  learning_rate: 1.0e-3
+  per_device_train_batch_size: 2
+  num_train_epochs: 1
+  max_steps: -1
