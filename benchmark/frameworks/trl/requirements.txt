@@ -1,13 +1,4 @@
-# HuggingFace TRL stack for Whisper RL benchmarks
-torch>=2.1.0
-transformers>=4.40.0
-datasets>=2.18.0
-accelerate>=0.28.0
-peft>=0.10.0
-trl>=0.9.0
-librosa>=0.10.0
-soundfile>=0.12.0
-jiwer>=3.0.0
-pyyaml>=6.0
-tqdm>=4.66.0
-numpy>=1.24.0
+# Deprecated: use uv at the repo root.
+#   bash benchmark/frameworks/trl/setup_env.sh
+#   # equivalent: uv sync --extra trl
+# See ../../../../pyproject.toml ([project.optional-dependencies].trl)
