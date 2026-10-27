@@ -1,0 +1,8 @@
+{"audio": {"path": "benchmark/data/demo/audio/train_000.wav"}, "duration": 1.0, "reference": "the quick brown fox jumps over the lazy dog", "language": "en", "id": "train-0"}
+{"audio": {"path": "benchmark/data/demo/audio/train_001.wav"}, "duration": 1.25, "reference": "open the window and listen to the rain", "language": "en", "id": "train-1"}
+{"audio": {"path": "benchmark/data/demo/audio/train_002.wav"}, "duration": 1.5, "reference": "reinforcement learning improves speech recognition", "language": "en", "id": "train-2"}
+{"audio": {"path": "benchmark/data/demo/audio/train_003.wav"}, "duration": 1.0, "reference": "whisper models can be fine tuned with rewards", "language": "en", "id": "train-3"}
+{"audio": {"path": "benchmark/data/demo/audio/train_004.wav"}, "duration": 1.25, "reference": "group relative policy optimization is sample efficient", "language": "en", "id": "train-4"}
+{"audio": {"path": "benchmark/data/demo/audio/train_005.wav"}, "duration": 1.5, "reference": "word error rate is a common evaluation metric", "language": "en", "id": "train-5"}
+{"audio": {"path": "benchmark/data/demo/audio/train_006.wav"}, "duration": 1.0, "reference": "please transcribe this short audio clip carefully", "language": "en", "id": "train-6"}
+{"audio": {"path": "benchmark/data/demo/audio/train_007.wav"}, "duration": 1.25, "reference": "benchmark frameworks include trl openrlhf and verl", "language": "en", "id": "train-7"}
