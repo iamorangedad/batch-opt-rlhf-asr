@@ -25,6 +25,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from benchmark.common.config import load_yaml
 from benchmark.common.data import load_asr_jsonl, load_audio_array
+from benchmark.common.gpu_memory import GpuMemoryTracker
 from benchmark.common.metrics import compute_cer, compute_wer
 
 
@@ -117,6 +118,7 @@ def orpo_loss(model, features, chosen_labels, rejected_labels, beta: float):
 
 def train(cfg, smoke=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    mem = GpuMemoryTracker(device)
     out_dir = Path(cfg["training"]["output_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -187,6 +189,7 @@ def train(cfg, smoke=False):
                     "nll": float(nll.cpu()),
                     "elapsed_sec": round(time.time() - t0, 2),
                 }
+                row.update(mem.sample())
                 with metrics_path.open("a", encoding="utf-8") as f:
                     f.write(json.dumps(row) + "\n")
                 pbar.set_postfix(loss=row["loss"])
@@ -222,6 +225,7 @@ def train(cfg, smoke=False):
         "device": str(device),
         "smoke": smoke,
     }
+    summary.update(mem.summary())
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     (out_dir / "eval_predictions.jsonl").write_text(
         "\n".join(json.dumps(r, ensure_ascii=False) for r in eval_rows) + "\n",
