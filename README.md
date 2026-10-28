@@ -3,37 +3,12 @@
 A PyTorch implementation of Reinforcement Learning from Human Feedback (RLHF) for Automatic Speech Recognition (ASR) using the Whisper model. This project implements the ORPO (Odds Ratio Preference Optimization) algorithm to fine-tune Whisper models with preference data.
 By optimizing data batch processing, this project reduces memory consumption by more than 50%.
 
-## Whisper RL Fine-tuning Benchmark
-
-Multi-framework RL fine-tuning benchmark for Whisper (env setup / test scripts /
-workflows): **[`benchmark/README.md`](benchmark/README.md)**
-
-Covered frameworks:
-
-- **TRL** (GRPO / ORPO)
-- **OpenRLHF**-style PPO
-- **verl**-style single-controller GRPO
-- **Native ORPO** (in-repo `finetune.py` baseline)
-
-Python env is managed by **uv** (`pyproject.toml` / `uv.lock`).
-
-```bash
-# Install uv, then sync deps
-curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
-bash scripts/setup_uv.sh all
-
-uv run python benchmark/scripts/generate_demo_data.py
-uv run bash benchmark/scripts/run_benchmark.sh smoke trl,openrlhf,verl
-```
-
-Details: [`benchmark/docs/uv_env.md`](benchmark/docs/uv_env.md)
-
-## 🎯 Project Overview
+## Project Overview
 
 This project enables fine-tuning of Whisper ASR models using preference-based learning, where the model learns to prefer high-quality transcriptions over low-quality ones. The implementation uses the ORPO algorithm, which is an efficient alternative to traditional RLHF methods.
 By optimizing data batch processing, this project reduces memory consumption by more than 50%.
 
-## 🏗️ Architecture
+## Architecture
 
 ### Core Components
 
@@ -51,27 +26,27 @@ By optimizing data batch processing, this project reduces memory consumption by 
 - **Audio Processing**: Built-in audio preprocessing and augmentation
 - **Flexible Configuration**: Extensive hyperparameter tuning options
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 batch-opt-rlhf-asr/
-├── pyproject.toml           # uv project / dependency declaration
-├── uv.lock                  # locked dependency graph
-├── .python-version          # Python pin for uv
-├── finetune.py              # Main training script
+├── finetune.py              # Main ORPO training entrypoint
 ├── scripts/
-│   ├── setup_uv.sh          # Bootstrap env with uv
-│   └── run_rlhf_asr.sh      # Training execution script
-├── benchmark/               # Multi-framework RL benchmark suite
-└── src/
-    ├── model.py             # Custom Whisper model implementation
-    ├── orpo_trainer.py      # ORPO trainer with custom loss
-    ├── data_reader.py       # Dataset loader for preference data
-    ├── data_utils.py        # Data processing utilities
-    └── utils.py             # General utility functions
+│   ├── setup_uv.sh          # Bootstrap Python env with uv
+│   └── run_rlhf_asr.sh      # Multi-GPU training launcher
+├── src/
+│   ├── model.py             # Custom Whisper model
+│   ├── orpo_trainer.py      # ORPO trainer / loss
+│   ├── data_reader.py       # Preference dataset loader
+│   ├── data_utils.py        # Collation and text utils
+│   ├── log.py               # Logging helpers
+│   └── utils.py             # CLI / download helpers
+├── pyproject.toml           # uv dependency declaration
+├── uv.lock                  # Locked dependency graph
+└── benchmark/               # Optional comparison suite (see below)
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -82,13 +57,13 @@ batch-opt-rlhf-asr/
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
-bash scripts/setup_uv.sh all
-# equivalent: uv sync --extra all --group dev
+bash scripts/setup_uv.sh base
+# equivalent: uv sync
 ```
 
 ### Data Format
 
-Your training data should be in JSON format with the following structure:
+Your training data should be in JSON / JSONL format with the following structure:
 
 ```json
 {
@@ -104,7 +79,7 @@ Your training data should be in JSON format with the following structure:
 
 1. **Single GPU Training**:
 ```bash
-python finetune.py \
+uv run python finetune.py \
   --base_model openai/whisper-tiny \
   --train_data train.json \
   --test_data test.json \
@@ -114,14 +89,14 @@ python finetune.py \
 
 2. **Multi-GPU Training**:
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 torchrun --nproc_per_node=2 finetune.py \
+CUDA_VISIBLE_DEVICES=0,1 uv run torchrun --nproc_per_node=2 finetune.py \
   --base_model openai/whisper-tiny \
   --train_data train.json \
   --test_data test.json \
   --output_dir ./output
 ```
 
-## ⚙️ Configuration Options
+## Configuration Options
 
 ### Model Configuration
 - `--base_model`: Base Whisper model (default: "openai/whisper-tiny")
@@ -150,7 +125,7 @@ CUDA_VISIBLE_DEVICES=0,1 torchrun --nproc_per_node=2 finetune.py \
 - `--use_8bit`: Use 8-bit quantization (default: False)
 - `--use_compile`: Use PyTorch 2.0 compiler (default: False)
 
-## 🔬 Technical Details
+## Technical Details
 
 ### ORPO Algorithm
 
@@ -180,7 +155,7 @@ The `CustomWhisperModel` extends the standard Whisper model with:
 3. **Tokenization**: Tokenize positive and negative transcriptions
 4. **Batch Collation**: Pad sequences for batch processing
 
-## 📊 Performance Optimization
+## Performance Optimization
 
 ### Memory Efficiency
 - Gradient checkpointing
@@ -194,7 +169,7 @@ The `CustomWhisperModel` extends the standard Whisper model with:
 - Optimized data collation
 - Batch processing optimizations
 
-## 🛠️ Advanced Usage
+## Advanced Usage
 
 ### Custom Loss Functions
 
@@ -224,13 +199,23 @@ Configure audio augmentation through the `augment_config_path` parameter:
 Resume training from checkpoints:
 
 ```bash
-python finetune.py \
+uv run python finetune.py \
   --resume_from_checkpoint ./checkpoint-1000 \
   --train_data train.json \
   --output_dir ./output
 ```
 
-## 🤝 Contributing
+## Optional: Mainstream Framework Comparison
+
+The core of this repository is the **in-house ORPO Whisper trainer** above.
+The `benchmark/` directory is an **optional** suite for comparing that baseline
+against mainstream RL stacks (TRL / OpenRLHF / verl) under a shared data and
+reward protocol.
+
+See **[`benchmark/README.md`](benchmark/README.md)** for setup, workflows, and
+comparison docs. It is not required to train with `finetune.py`.
+
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -238,16 +223,16 @@ python finetune.py \
 4. Add tests if applicable
 5. Submit a pull request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - OpenAI for the Whisper model
 - Hugging Face for the Transformers library
 - The RLHF research community for preference learning algorithms
 
-## 📞 Support
+## Support
 
-For questions and support, please open an issue on the GitHub repository. 
+For questions and support, please open an issue on the GitHub repository.
