@@ -49,8 +49,9 @@ class ORPOTrainer(Trainer):
             dtype=torch.float64
         ) / mask.sum(dim=1).to(dtype=torch.float64)
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         # model outputs
+        # num_items_in_batch is accepted for newer transformers Trainer compatibility.
         neg_labels = inputs["negative_input_ids"].clone()
         pos_labels = inputs["positive_input_ids"].clone()
         outputs_neg = model(
@@ -87,5 +88,11 @@ class ORPOTrainer(Trainer):
         sig_ratio = torch.nn.functional.sigmoid(log_odds)
         ratio = torch.log(sig_ratio)
         # Calculate the Final Loss
-        loss = torch.mean(pos_loss - self.alpha * ratio).to(dtype=torch.bfloat16)
+        # Use float32 on CPU; bfloat16 when CUDA BF16 is available.
+        loss_dtype = (
+            torch.bfloat16
+            if torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+            else torch.float32
+        )
+        loss = torch.mean(pos_loss - self.alpha * ratio).to(dtype=loss_dtype)
         return (loss, outputs_pos) if return_outputs else loss
