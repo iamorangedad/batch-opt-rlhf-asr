@@ -15,6 +15,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from benchmark.common.data import load_asr_jsonl, load_audio_array
+from benchmark.common.cpu_memory import CpuMemoryTracker
 from benchmark.common.gpu_memory import GpuMemoryTracker
 from benchmark.common.metrics import aggregate_error_rates, compute_cer, compute_wer
 
@@ -47,10 +48,12 @@ def main():
     args = p.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    mem = GpuMemoryTracker(device)
+    gpu_mem = GpuMemoryTracker(device)
+    cpu_mem = CpuMemoryTracker()
     model, processor = load_model(args.model_path, args.base_model)
     model.to(device)
-    mem.sample()
+    gpu_mem.sample()
+    cpu_mem.sample()
 
     samples = load_asr_jsonl(args.eval_path, args.language)
     if args.max_samples:
@@ -82,7 +85,8 @@ def main():
         "cer": aggregate_error_rates(((r["reference"], r["hypothesis"]) for r in rows), "cer"),
         "device": str(device),
     }
-    summary.update(mem.summary())
+    summary.update(gpu_mem.summary())
+    summary.update(cpu_mem.summary())
     out = Path(args.output) if args.output else Path(args.model_path) / "eval_report.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"summary": summary, "predictions": rows}, indent=2), encoding="utf-8")
