@@ -25,15 +25,15 @@ class CustomDataset(Dataset):
     ):
         """
         Args:
-            data_list_path: 数据列表文件的路径，或者二进制列表的头文件路径
-            processor: Whisper的预处理工具，WhisperProcessor.from_pretrained获取
-            mono: 是否将音频转换成单通道，这个必须是True
-            language: 微调数据的语言
-            timestamps: 微调时是否使用时间戳
-            sample_rate: 音频的采样率，默认是16000
-            min_duration: 小于这个时间段的音频将被截断，单位秒，不能小于0.5，默认0.5s
-            max_duration: 大于这个时间段的音频将被截断，单位秒，不能大于30，默认30s
-            augment_config_path: 数据增强配置参数文件路径
+            data_list_path: Path to the data list file (or binary list header).
+            processor: Whisper preprocessor from WhisperProcessor.from_pretrained.
+            mono: Convert audio to mono; must be True.
+            language: Language of the fine-tuning data.
+            timestamps: Whether to use timestamp tokens during fine-tuning.
+            sample_rate: Audio sample rate in Hz (default: 16000).
+            min_duration: Drop clips shorter than this many seconds (min 0.5).
+            max_duration: Drop clips longer than this many seconds (max 30).
+            augment_config_path: Optional path to an audio augmentation config.
         """
         super(CustomDataset, self).__init__()
         assert (
