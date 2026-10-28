@@ -23,6 +23,26 @@
 - **Native ORPO** (`finetune.py`) completed after compatibility fixes for current transformers/peft APIs.
 - Under this short CPU budget, post-train WER matches the base model within noise; the run validates **end-to-end comparability**, not SOTA quality.
 
+## GPU memory tracking
+
+Each framework run now records CUDA memory in `summary.json` and step logs:
+
+| Field | Meaning |
+| --- | --- |
+| `gpu_available` | Whether CUDA was available |
+| `gpu_device_name` | GPU name (e.g. NVIDIA A100) |
+| `gpu_total_memory_mb` | Device VRAM capacity (MiB) |
+| `gpu_peak_allocated_mb` | Peak `torch.cuda.memory_allocated` during the run |
+| `gpu_peak_reserved_mb` | Peak `torch.cuda.memory_reserved` during the run |
+
+Step-wise samples are written into `train_metrics.jsonl`. Aggregate with:
+
+```bash
+uv run python benchmark/scripts/compare_results.py --outputs_dir outputs/benchmark
+```
+
+On CPU-only hosts these fields are `null` / `gpu_available=false`.
+
 ## How to reproduce (GPU recommended)
 
 ```bash
