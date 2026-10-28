@@ -1,69 +1,71 @@
-# OpenRLHF 风格流水线（Whisper ASR）
+# OpenRLHF-style pipeline (Whisper ASR)
 
-OpenRLHF 是面向生产的 RLHF 框架（Ray 调度 + DeepSpeed/Megatron + vLLM rollout）。  
-本基准提供 **角色对齐的 Whisper PPO 适配器**：Actor / Reference / Reward 三分法与 OpenRLHF 一致，便于对照测试流程；完整 Ray+vLLM 集群可作为后续扩展。
+OpenRLHF is a production RLHF stack (Ray + DeepSpeed/Megatron + vLLM rollout).
+This benchmark provides a **role-aligned Whisper PPO adapter**: Actor / Reference /
+Reward match OpenRLHF concepts for comparable test workflows; a full Ray+vLLM
+cluster can be added later.
 
 ---
 
-## 1. 搭建测试环境（uv）
+## 1. Environment setup (uv)
 
 ```bash
 bash benchmark/frameworks/openrlhf/setup_env.sh
-# 等价: uv sync --extra openrlhf
+# equivalent: uv sync --extra openrlhf
 
-source .venv/bin/activate   # 可选；也可用 uv run
+source .venv/bin/activate   # optional; or use uv run
 
-# 可选：完整 OpenRLHF（decoder-only / 多机）
+# Optional full OpenRLHF (decoder-only / multi-node)
 # uv pip install openrlhf vllm
 ```
 
 ---
 
-## 2. 准备测试脚本与数据
+## 2. Prepare scripts and data
 
 ```bash
 python benchmark/scripts/generate_demo_data.py
 ```
 
-配置：`benchmark/configs/frameworks/openrlhf.yaml`
+Config: `benchmark/configs/frameworks/openrlhf.yaml`
 
-脚本：
+Scripts:
 
 - `train_ppo.py` — colocated PPO
 - `run.sh` — setup / smoke / ppo
 
 ---
 
-## 3. 如何进行测试
+## 3. How to run tests
 
-### 3.1 冒烟
+### 3.1 Smoke
 
 ```bash
 bash benchmark/frameworks/openrlhf/run.sh smoke
 ```
 
-### 3.2 PPO 训练
+### 3.2 PPO training
 
 ```bash
 bash benchmark/frameworks/openrlhf/run.sh ppo
-# 或
+# or
 python benchmark/frameworks/openrlhf/train_ppo.py \
   --config benchmark/configs/frameworks/openrlhf.yaml \
   --max_steps 30
 ```
 
-训练环（对齐 OpenRLHF 概念）：
+Training loop (OpenRLHF-aligned concepts):
 
 ```text
-Rollout Worker  →  Actor.generate(G 条假设)
-Reward          →  WER/CER 规则奖励（可替换为 RM）
-Reference       →  冻结策略算 KL
+Rollout Worker  →  Actor.generate(G hypotheses)
+Reward          →  WER/CER rule reward (swap for an RM if needed)
+Reference       →  frozen policy for KL
 PPO Update      →  clipped surrogate + KL coef
 ```
 
-### 3.3 结果
+### 3.3 Results
 
-输出目录：`outputs/benchmark/openrlhf/`
+Output dir: `outputs/benchmark/openrlhf/`
 
 ```bash
 python benchmark/scripts/compare_results.py --outputs_dir outputs/benchmark
@@ -71,26 +73,27 @@ python benchmark/scripts/compare_results.py --outputs_dir outputs/benchmark
 
 ---
 
-## 与官方 OpenRLHF 的关系
+## Relation to upstream OpenRLHF
 
-| 组件 | 本适配器 | 官方 OpenRLHF |
+| Component | This adapter | Upstream OpenRLHF |
 |---|---|---|
-| 调度 | 单进程 | Ray Actor Pool |
-| Rollout | HF `generate` | vLLM / 异步生成 |
-| 训练引擎 | PyTorch AdamW | DeepSpeed ZeRO / Megatron |
-| 模型 | Whisper seq2seq | 主要为 Causal LM |
-| 奖励 | 规则 WER/CER | RM 或规则 |
+| Scheduling | single process | Ray Actor Pool |
+| Rollout | HF `generate` | vLLM / async generation |
+| Train engine | PyTorch AdamW | DeepSpeed ZeRO / Megatron |
+| Model | Whisper seq2seq | mostly Causal LM |
+| Reward | rule WER/CER | RM or rules |
 
-当你的 ASR 模型是 **decoder-only audio-LLM** 时，可直接切到官方 OpenRLHF，复用同一 `reference` JSONL 与奖励函数接口。
+If your ASR model is a **decoder-only audio-LLM**, switch to upstream OpenRLHF and
+reuse the same `reference` JSONL and reward interface.
 
 ---
 
-## 关键配置
+## Key config
 
-| 参数 | 含义 |
+| Param | Meaning |
 |---|---|
-| `openrlhf.num_generations` | rollout 组大小 |
+| `openrlhf.num_generations` | rollout group size |
 | `openrlhf.clip_eps` | PPO clip |
-| `openrlhf.kl_coef` | KL 惩罚 |
-| `openrlhf.ppo_epochs` | 每批 PPO 更新轮数 |
-| `openrlhf.use_ray` | 预留开关（默认 false） |
+| `openrlhf.kl_coef` | KL penalty |
+| `openrlhf.ppo_epochs` | PPO epochs per batch |
+| `openrlhf.use_ray` | reserved flag (default false) |
