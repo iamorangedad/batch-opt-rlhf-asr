@@ -175,12 +175,18 @@ def main():
     # ================================= whisper model  ==============================
     # ===============================================================================
     print("Loading whisper model...")
-    device_map = "auto"
+    load_kwargs = {
+        "local_files_only": args.local_files_only,
+    }
+    # Newer transformers reject load_in_8bit=False; only pass when enabled.
+    if args.use_8bit:
+        load_kwargs["load_in_8bit"] = True
+        load_kwargs["device_map"] = "auto"
+    elif torch.cuda.is_available():
+        load_kwargs["device_map"] = "auto"
     model = WhisperForConditionalGeneration.from_pretrained(
         args.base_model,
-        load_in_8bit=args.use_8bit,
-        device_map=device_map,
-        local_files_only=args.local_files_only,
+        **load_kwargs,
     )
     model.config.forced_decoder_ids = None
     model.config.suppress_tokens = []
@@ -235,15 +241,16 @@ def main():
     if args.base_model.endswith("/"):
         args.base_model = args.base_model[:-1]
     output_dir = os.path.join(args.output_dir, os.path.basename(args.base_model))
+    use_bf16 = bool(torch.cuda.is_available() and torch.cuda.is_bf16_supported())
     training_args = TrainingArguments(
         output_dir=output_dir,  # The output directory
         logging_steps=args.logging_steps,
         learning_rate=args.learning_rate,
-        overwrite_output_dir=True,  # overwrite the content of the output directory
         num_train_epochs=args.num_train_epochs,  # number of training epochs
         per_device_train_batch_size=args.per_device_train_batch_size,  # batch size for training
         per_device_eval_batch_size=args.per_device_eval_batch_size,  # batch size for evaluation
-        evaluation_strategy=args.evaluation_strategy if args.is_test else "no",
+        # transformers>=4.46 renamed evaluation_strategy -> eval_strategy
+        eval_strategy=args.evaluation_strategy if args.is_test else "no",
         save_strategy=args.evaluation_strategy,
         optim=args.optim,
         warmup_steps=args.warmup_steps,
@@ -257,7 +264,7 @@ def main():
         do_eval=args.is_test,
         lr_scheduler_type=args.lr_scheduler_type,
         remove_unused_columns=False,
-        bf16=True,
+        bf16=use_bf16,
         seed=args.seed,
     )
     # ===============================================================================
@@ -272,7 +279,8 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
         data_collator=data_collator,
-        tokenizer=processor.feature_extractor,
+        # transformers Trainer renamed tokenizer -> processing_class
+        processing_class=processor.feature_extractor,
     )
     model.config.use_cache = False
 
