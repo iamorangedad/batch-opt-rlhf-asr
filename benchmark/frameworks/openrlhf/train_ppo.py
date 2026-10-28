@@ -30,6 +30,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from benchmark.common.config import load_yaml
 from benchmark.common.data import load_asr_jsonl, load_audio_array
+from benchmark.common.cpu_memory import CpuMemoryTracker
 from benchmark.common.gpu_memory import GpuMemoryTracker
 from benchmark.common.metrics import compute_cer, compute_wer
 from benchmark.common.rewards import RewardConfig, compute_asr_reward
@@ -163,7 +164,8 @@ def ppo_update(
 
 def train(cfg, smoke=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    mem = GpuMemoryTracker(device)
+    gpu_mem = GpuMemoryTracker(device)
+    cpu_mem = CpuMemoryTracker()
     out_dir = Path(cfg["training"]["output_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -270,7 +272,8 @@ def train(cfg, smoke=False):
                 "reward_mean": sum(rewards_all) / max(len(rewards_all), 1),
                 "elapsed_sec": round(time.time() - t0, 2),
             }
-            row.update(mem.sample())
+            row.update(gpu_mem.sample())
+            row.update(cpu_mem.sample())
             with metrics_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(row) + "\n")
             pbar.set_postfix(loss=row["loss"], reward=row["reward_mean"])
@@ -307,7 +310,8 @@ def train(cfg, smoke=False):
         "smoke": smoke,
         "ray_enabled": bool(oh.get("use_ray", False)),
     }
-    summary.update(mem.summary())
+    summary.update(gpu_mem.summary())
+    summary.update(cpu_mem.summary())
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     (out_dir / "eval_predictions.jsonl").write_text(
         "\n".join(json.dumps(r, ensure_ascii=False) for r in eval_rows) + "\n",
