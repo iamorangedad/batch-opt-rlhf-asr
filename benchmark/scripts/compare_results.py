@@ -13,6 +13,12 @@ def find_summaries(root: Path) -> List[Path]:
     return sorted(root.glob("**/summary.json"))
 
 
+def _fmt_mb(value) -> str:
+    if isinstance(value, (int, float)):
+        return f"{value:.1f}"
+    return ""
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument(
@@ -42,27 +48,44 @@ def main():
                 "steps": data.get("steps"),
                 "device": data.get("device"),
                 "smoke": data.get("smoke"),
+                "gpu_peak_allocated_mb": data.get("gpu_peak_allocated_mb"),
+                "gpu_peak_reserved_mb": data.get("gpu_peak_reserved_mb"),
+                "gpu_total_memory_mb": data.get("gpu_total_memory_mb"),
+                "gpu_device_name": data.get("gpu_device_name"),
+                "gpu_available": data.get("gpu_available"),
             }
         )
 
-    # Pretty table
-    headers = ["framework", "algorithm", "eval_wer", "eval_cer", "steps", "smoke", "path"]
+    headers = [
+        "framework",
+        "algorithm",
+        "eval_wer",
+        "eval_cer",
+        "steps",
+        "gpu_peak_alloc_mb",
+        "gpu_peak_reserved_mb",
+        "gpu_total_mb",
+        "gpu_name",
+        "smoke",
+        "path",
+    ]
     print(" | ".join(headers))
     print(" | ".join("---" for _ in headers))
-    lines = ["| " + " | ".join(headers) + " |", "| " + " | ".join("---" for _ in headers) + " |"]
+    lines = [
+        "| " + " | ".join(headers) + " |",
+        "| " + " | ".join("---" for _ in headers) + " |",
+    ]
     for r in rows:
-        vals = [
-            str(r.get(h, "")) if h != "eval_wer" and h != "eval_cer"
-            else (f"{r.get(h):.4f}" if isinstance(r.get(h), (int, float)) else "")
-            for h in headers
-        ]
-        # fix formatting for wer/cer already handled; rebuild cleanly
         vals = [
             str(r["framework"]),
             str(r["algorithm"]),
             f"{r['eval_wer']:.4f}" if isinstance(r["eval_wer"], (int, float)) else "",
             f"{r['eval_cer']:.4f}" if isinstance(r["eval_cer"], (int, float)) else "",
             str(r["steps"]),
+            _fmt_mb(r["gpu_peak_allocated_mb"]),
+            _fmt_mb(r["gpu_peak_reserved_mb"]),
+            _fmt_mb(r["gpu_total_memory_mb"]),
+            str(r["gpu_device_name"] or ""),
             str(r["smoke"]),
             str(r["path"]),
         ]
