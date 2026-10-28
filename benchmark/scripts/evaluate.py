@@ -15,6 +15,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from benchmark.common.data import load_asr_jsonl, load_audio_array
+from benchmark.common.gpu_memory import GpuMemoryTracker
 from benchmark.common.metrics import aggregate_error_rates, compute_cer, compute_wer
 
 
@@ -46,8 +47,10 @@ def main():
     args = p.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    mem = GpuMemoryTracker(device)
     model, processor = load_model(args.model_path, args.base_model)
     model.to(device)
+    mem.sample()
 
     samples = load_asr_jsonl(args.eval_path, args.language)
     if args.max_samples:
@@ -77,7 +80,9 @@ def main():
         "num_samples": len(rows),
         "wer": aggregate_error_rates(((r["reference"], r["hypothesis"]) for r in rows), "wer"),
         "cer": aggregate_error_rates(((r["reference"], r["hypothesis"]) for r in rows), "cer"),
+        "device": str(device),
     }
+    summary.update(mem.summary())
     out = Path(args.output) if args.output else Path(args.model_path) / "eval_report.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"summary": summary, "predictions": rows}, indent=2), encoding="utf-8")
