@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import argparse
 import functools
 import logging
@@ -15,11 +16,13 @@ from peft import (
     PeftModel,
     prepare_model_for_kbit_training,
 )
+from transformers import TrainerCallback
 from src.orpo_trainer import ORPOTrainer
 from src.data_reader import CustomDataset
 from src.log import log_creater, StreamToLogger
 from src.utils import print_arguments, add_arguments
 from src.data_utils import DataCollatorSpeechSeq2SeqWithPadding
+from benchmark.common.gpu_memory import GpuMemoryTracker
 
 # ===============================================================================
 # ================================= log  =================================
@@ -270,6 +273,20 @@ def main():
     # ===============================================================================
     # ================================= trainer  ====================================
     # ===============================================================================
+    gpu_mem = GpuMemoryTracker()
+
+    class GpuMemoryCallback(TrainerCallback):
+        def __init__(self, tracker: GpuMemoryTracker):
+            self.tracker = tracker
+
+        def on_log(self, args, state, control, logs=None, **kwargs):
+            snap = self.tracker.sample()
+            if logs is not None and snap.get("gpu_available"):
+                logs["gpu_allocated_mb"] = snap["gpu_allocated_mb"]
+                logs["gpu_peak_allocated_mb"] = snap["gpu_peak_allocated_mb"]
+                logs["gpu_peak_reserved_mb"] = snap["gpu_peak_reserved_mb"]
+            return control
+
     trainer = ORPOTrainer(
         model=model,
         alpha=args.alpha,
@@ -281,6 +298,7 @@ def main():
         data_collator=data_collator,
         # transformers Trainer renamed tokenizer -> processing_class
         processing_class=processor.feature_extractor,
+        callbacks=[GpuMemoryCallback(gpu_mem)],
     )
     model.config.use_cache = False
 
@@ -298,8 +316,23 @@ def main():
     trainer.save_state()
     print("save state done.")
     model.config.use_cache = True
-    model.save_pretrained(os.path.join(output_dir, "checkpoint-final"))
+    final_dir = os.path.join(output_dir, "checkpoint-final")
+    model.save_pretrained(final_dir)
     print("save model done.")
+    # Persist GPU memory summary next to training outputs for benchmark compares.
+    mem_summary = {
+        "framework": "native_orpo",
+        "algorithm": "orpo",
+        "steps": int(getattr(trainer.state, "global_step", 0) or 0),
+        "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "output_dir": output_dir,
+    }
+    mem_summary.update(gpu_mem.summary())
+    summary_path = os.path.join(output_dir, "summary.json")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump(mem_summary, f, indent=2)
+    print(f"Wrote GPU memory summary to {summary_path}")
+    print(mem_summary)
 
 
 if __name__ == "__main__":
