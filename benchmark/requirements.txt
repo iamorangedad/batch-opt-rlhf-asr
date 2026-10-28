@@ -1,0 +1,8 @@
+# Deprecated: dependency management moved to uv.
+# Use the project root instead:
+#
+#   curl -LsSf https://astral.sh/uv/install.sh | sh
+#   bash scripts/setup_uv.sh all
+#   # or: uv sync --extra all
+#
+# See pyproject.toml and uv.lock.

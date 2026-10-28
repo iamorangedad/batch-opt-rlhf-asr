@@ -3,6 +3,31 @@
 A PyTorch implementation of Reinforcement Learning from Human Feedback (RLHF) for Automatic Speech Recognition (ASR) using the Whisper model. This project implements the ORPO (Odds Ratio Preference Optimization) algorithm to fine-tune Whisper models with preference data.
 By optimizing data batch processing, this project reduces memory consumption by more than 50%.
 
+## Whisper RL Fine-tuning Benchmark
+
+Multi-framework RL fine-tuning benchmark for Whisper (env setup / test scripts /
+workflows): **[`benchmark/README.md`](benchmark/README.md)**
+
+Covered frameworks:
+
+- **TRL** (GRPO / ORPO)
+- **OpenRLHF**-style PPO
+- **verl**-style single-controller GRPO
+- **Native ORPO** (in-repo `finetune.py` baseline)
+
+Python env is managed by **uv** (`pyproject.toml` / `uv.lock`).
+
+```bash
+# Install uv, then sync deps
+curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
+bash scripts/setup_uv.sh all
+
+uv run python benchmark/scripts/generate_demo_data.py
+uv run bash benchmark/scripts/run_benchmark.sh smoke trl,openrlhf,verl
+```
+
+Details: [`benchmark/docs/uv_env.md`](benchmark/docs/uv_env.md)
+
 ## 🎯 Project Overview
 
 This project enables fine-tuning of Whisper ASR models using preference-based learning, where the model learns to prefer high-quality transcriptions over low-quality ones. The implementation uses the ORPO algorithm, which is an efficient alternative to traditional RLHF methods.
@@ -30,33 +55,35 @@ By optimizing data batch processing, this project reduces memory consumption by 
 
 ```
 batch-opt-rlhf-asr/
+├── pyproject.toml           # uv project / dependency declaration
+├── uv.lock                  # locked dependency graph
+├── .python-version          # Python pin for uv
 ├── finetune.py              # Main training script
 ├── scripts/
-│   └── run_rlhf_asr.sh     # Training execution script
+│   ├── setup_uv.sh          # Bootstrap env with uv
+│   └── run_rlhf_asr.sh      # Training execution script
+├── benchmark/               # Multi-framework RL benchmark suite
 └── src/
-    ├── model.py            # Custom Whisper model implementation
-    ├── orpo_trainer.py     # ORPO trainer with custom loss
-    ├── data_reader.py      # Dataset loader for preference data
-    ├── data_utils.py       # Data processing utilities
-    └── utils.py            # General utility functions
+    ├── model.py             # Custom Whisper model implementation
+    ├── orpo_trainer.py      # ORPO trainer with custom loss
+    ├── data_reader.py       # Dataset loader for preference data
+    ├── data_utils.py        # Data processing utilities
+    └── utils.py             # General utility functions
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.8+
-- PyTorch 2.0+
-- Transformers
-- Datasets
-- Librosa
-- Soundfile
-- PEFT
+- [uv](https://docs.astral.sh/uv/) (recommended)
+- Python 3.10+ (installed by `.python-version` / uv; default 3.12)
 
 ### Installation
 
 ```bash
-pip install torch transformers datasets librosa soundfile peft
+curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
+bash scripts/setup_uv.sh all
+# equivalent: uv sync --extra all --group dev
 ```
 
 ### Data Format

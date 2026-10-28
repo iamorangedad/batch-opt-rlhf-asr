@@ -1,0 +1,4 @@
+{"audio": {"path": "benchmark/data/demo/audio/eval_000.wav"}, "duration": 1.0, "reference": "the quick brown fox jumps over the lazy dog", "language": "en", "id": "eval-0"}
+{"audio": {"path": "benchmark/data/demo/audio/eval_001.wav"}, "duration": 1.25, "reference": "open the window and listen to the rain", "language": "en", "id": "eval-1"}
+{"audio": {"path": "benchmark/data/demo/audio/eval_002.wav"}, "duration": 1.5, "reference": "reinforcement learning improves speech recognition", "language": "en", "id": "eval-2"}
+{"audio": {"path": "benchmark/data/demo/audio/eval_003.wav"}, "duration": 1.0, "reference": "whisper models can be fine tuned with rewards", "language": "en", "id": "eval-3"}

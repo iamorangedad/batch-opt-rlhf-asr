@@ -1,0 +1,4 @@
+# Deprecated: use uv at the repo root.
+#   bash benchmark/frameworks/verl/setup_env.sh
+#   # equivalent: uv sync
+# See ../../../../pyproject.toml

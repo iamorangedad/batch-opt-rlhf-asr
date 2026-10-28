@@ -1,0 +1,4 @@
+# Deprecated: use uv at the repo root.
+#   bash benchmark/frameworks/openrlhf/setup_env.sh
+#   # equivalent: uv sync --extra openrlhf
+# See ../../../../pyproject.toml ([project.optional-dependencies].openrlhf)

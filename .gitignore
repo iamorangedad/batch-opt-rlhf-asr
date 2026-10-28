@@ -1,0 +1,26 @@
+# Python / uv
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.venvs/
+venv/
+.python-version.local
+uv-cache/
+
+# Training outputs
+outputs/
+logs/
+wandb/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local caches
+.cache/
+*.pt
+*.bin
+*.safetensors
+!benchmark/data/demo/**/*.wav

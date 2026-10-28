@@ -1,0 +1,4 @@
+# Deprecated: use uv at the repo root.
+#   bash benchmark/frameworks/trl/setup_env.sh
+#   # equivalent: uv sync --extra trl
+# See ../../../../pyproject.toml ([project.optional-dependencies].trl)
