@@ -26,6 +26,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from benchmark.common.config import load_yaml
 from benchmark.common.data import load_asr_jsonl, load_audio_array
+from benchmark.common.gpu_memory import GpuMemoryTracker
 from benchmark.common.metrics import compute_cer, compute_wer
 from benchmark.common.rewards import (
     RewardConfig,
@@ -150,6 +151,7 @@ def sample_group(model, processor, features, language, n, temperature, max_new_t
 
 def train(cfg: dict, smoke: bool = False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    mem = GpuMemoryTracker(device)
     out_dir = Path(cfg["training"]["output_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -275,6 +277,7 @@ def train(cfg: dict, smoke: bool = False):
                     "reward_mean": float(sum(reward_means) / max(len(reward_means), 1)),
                     "elapsed_sec": round(time.time() - t0, 2),
                 }
+                row.update(mem.sample())
                 with metrics_path.open("a", encoding="utf-8") as f:
                     f.write(json.dumps(row) + "\n")
                 pbar.set_postfix(loss=row["loss"], reward=row["reward_mean"])
@@ -315,6 +318,7 @@ def train(cfg: dict, smoke: bool = False):
         "device": str(device),
         "smoke": smoke,
     }
+    summary.update(mem.summary())
     (out_dir / "summary.json").write_text(
         json.dumps(summary, indent=2), encoding="utf-8"
     )
