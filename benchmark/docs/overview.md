@@ -1,31 +1,33 @@
-# 基准总览：用 RL 微调 Whisper
+# Benchmark overview: RL fine-tuning for Whisper
 
-## 目标
+## Goal
 
-在统一的 **音频数据、奖励函数、评测指标** 下，对比不同强化学习工程框架微调 Whisper 的流程与效果。
+Compare RL engineering frameworks for Whisper fine-tuning under a shared
+**audio dataset, reward function, and evaluation metrics**.
 
-## 为什么需要多框架基准？
+## Why multiple frameworks?
 
-- ASR 有 **可验证奖励**（WER/CER），天然适合 GRPO / PPO 等 RLVR 方法。  
-- 工业界主流 post-training 栈（TRL / OpenRLHF / verl）能力侧重点不同。  
-- Whisper 是 seq2seq，多数 LLM-RL 框架不能开箱即用，需要明确 **适配层与测试流程**。
+- ASR has **verifiable rewards** (WER/CER), which fit GRPO / PPO-style RLVR.
+- Industrial post-training stacks (TRL / OpenRLHF / verl) emphasize different strengths.
+- Whisper is seq2seq; most LLM-RL frameworks are not Whisper-ready out of the box,
+  so adapters and test workflows must be explicit.
 
-## 推荐实验流程
+## Recommended experiment flow
 
 ```text
-准备数据 (prepare_data / generate_demo_data)
+Prepare data (prepare_data / generate_demo_data)
         ↓
-选择框架环境 (frameworks/*/setup_env.sh)
+Set up framework env (frameworks/*/setup_env.sh via uv)
         ↓
-冒烟 smoke (run.sh smoke)
+Smoke test (run.sh smoke)
         ↓
-正式训练 (run.sh grpo|ppo|orpo)
+Full train (run.sh grpo|ppo|orpo)
         ↓
 evaluate.py + compare_results.py
 ```
 
-## 成功标准（冒烟）
+## Smoke success criteria
 
-- 各框架 `run.sh smoke` 退出码 0  
-- 产出 `summary.json`  
-- `eval_wer` / `eval_cer` 为有限数值（demo 数据上数值本身无业务意义）
+- Each framework `run.sh smoke` exits 0
+- Produces `summary.json`
+- `eval_wer` / `eval_cer` are finite numbers (values on demo tones are not meaningful)
