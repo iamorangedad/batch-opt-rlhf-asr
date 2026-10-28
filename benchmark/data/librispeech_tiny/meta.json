@@ -1,0 +1,5 @@
+{
+  "num_train": 12,
+  "num_eval": 4,
+  "source": "hf-internal-testing/librispeech_asr_dummy"
+}
