@@ -5,21 +5,20 @@ By optimizing data batch processing, this project reduces memory consumption by 
 
 ## Whisper RL Fine-tuning Benchmark
 
-多框架强化学习微调 Whisper 的基准测试套件（环境搭建 / 测试脚本 / 测试流程）见：
+Multi-framework RL fine-tuning benchmark for Whisper (env setup / test scripts /
+workflows): **[`benchmark/README.md`](benchmark/README.md)**
 
-**[`benchmark/README.md`](benchmark/README.md)**
+Covered frameworks:
 
-覆盖框架：
+- **TRL** (GRPO / ORPO)
+- **OpenRLHF**-style PPO
+- **verl**-style single-controller GRPO
+- **Native ORPO** (in-repo `finetune.py` baseline)
 
-- **TRL**（GRPO / ORPO）
-- **OpenRLHF** 风格 PPO
-- **verl** 风格单控制器 GRPO
-- **Native ORPO**（本仓库 `finetune.py` 基线）
-
-Python 环境由 **uv** 管理（见 `pyproject.toml` / `uv.lock`）。
+Python env is managed by **uv** (`pyproject.toml` / `uv.lock`).
 
 ```bash
-# 安装 uv 后同步依赖
+# Install uv, then sync deps
 curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
 bash scripts/setup_uv.sh all
 
@@ -27,7 +26,7 @@ uv run python benchmark/scripts/generate_demo_data.py
 uv run bash benchmark/scripts/run_benchmark.sh smoke trl,openrlhf,verl
 ```
 
-详细说明：[`benchmark/docs/uv_env.md`](benchmark/docs/uv_env.md)
+Details: [`benchmark/docs/uv_env.md`](benchmark/docs/uv_env.md)
 
 ## 🎯 Project Overview
 
@@ -76,15 +75,15 @@ batch-opt-rlhf-asr/
 
 ### Prerequisites
 
-- [uv](https://docs.astral.sh/uv/)（推荐）
-- Python 3.10+（由 `.python-version` / uv 自动安装，默认 3.12）
+- [uv](https://docs.astral.sh/uv/) (recommended)
+- Python 3.10+ (installed by `.python-version` / uv; default 3.12)
 
 ### Installation
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
 bash scripts/setup_uv.sh all
-# 等价: uv sync --extra all --group dev
+# equivalent: uv sync --extra all --group dev
 ```
 
 ### Data Format
