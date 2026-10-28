@@ -48,6 +48,9 @@ def main():
                 "steps": data.get("steps"),
                 "device": data.get("device"),
                 "smoke": data.get("smoke"),
+                "cpu_peak_rss_mb": data.get("cpu_peak_rss_mb"),
+                "cpu_peak_rss_delta_mb": data.get("cpu_peak_rss_delta_mb"),
+                "cpu_baseline_rss_mb": data.get("cpu_baseline_rss_mb"),
                 "gpu_peak_allocated_mb": data.get("gpu_peak_allocated_mb"),
                 "gpu_peak_reserved_mb": data.get("gpu_peak_reserved_mb"),
                 "gpu_total_memory_mb": data.get("gpu_total_memory_mb"),
@@ -59,14 +62,12 @@ def main():
     headers = [
         "framework",
         "algorithm",
-        "eval_wer",
-        "eval_cer",
         "steps",
+        "cpu_peak_rss_mb",
+        "cpu_delta_mb",
         "gpu_peak_alloc_mb",
-        "gpu_peak_reserved_mb",
-        "gpu_total_mb",
-        "gpu_name",
-        "smoke",
+        "eval_wer",
+        "device",
         "path",
     ]
     print(" | ".join(headers))
@@ -79,14 +80,12 @@ def main():
         vals = [
             str(r["framework"]),
             str(r["algorithm"]),
-            f"{r['eval_wer']:.4f}" if isinstance(r["eval_wer"], (int, float)) else "",
-            f"{r['eval_cer']:.4f}" if isinstance(r["eval_cer"], (int, float)) else "",
             str(r["steps"]),
+            _fmt_mb(r["cpu_peak_rss_mb"]),
+            _fmt_mb(r["cpu_peak_rss_delta_mb"]),
             _fmt_mb(r["gpu_peak_allocated_mb"]),
-            _fmt_mb(r["gpu_peak_reserved_mb"]),
-            _fmt_mb(r["gpu_total_memory_mb"]),
-            str(r["gpu_device_name"] or ""),
-            str(r["smoke"]),
+            f"{r['eval_wer']:.4f}" if isinstance(r["eval_wer"], (int, float)) else "",
+            str(r["device"] or ""),
             str(r["path"]),
         ]
         print(" | ".join(vals))
