@@ -1,7 +1,16 @@
 # Whisper RL Fine-tuning Benchmark
 
-A benchmark suite for **reinforcement-learning fine-tuning of Whisper / ASR**.
-For each common industry RL framework it provides:
+Optional comparison suite for this repository.
+
+The **core product** of the repo is the in-house Whisper ORPO trainer
+(`finetune.py` + `src/`). This `benchmark/` tree exists to **compare that
+baseline against mainstream RL frameworks** (TRL / OpenRLHF / verl) under a
+shared data protocol, reward, and eval metrics.
+
+It is **not required** for day-to-day ORPO training. For the main project, see
+the [root README](../README.md).
+
+For each framework it provides:
 
 1. **Environment setup** (**uv** + `setup_env.sh` / `pyproject.toml`)
 2. **Test scripts** (train / smoke / evaluate)
@@ -14,6 +23,19 @@ Python dependencies are managed with uv; see [`docs/uv_env.md`](docs/uv_env.md).
 > per framework under a shared reward and data protocol; production scale-out can
 > later plug in native Ray / vLLM / FSDP backends.
 
+## Relation to the core trainer
+
+| Piece | Role |
+|---|---|
+| `finetune.py` + `src/orpo_trainer.py` | Primary in-house ORPO training |
+| `benchmark/frameworks/native_orpo/` | Thin wrapper that runs the in-house trainer as a baseline |
+| `benchmark/frameworks/trl/` | Mainstream TRL-style GRPO / ORPO comparison |
+| `benchmark/frameworks/openrlhf/` | Mainstream OpenRLHF-style PPO comparison |
+| `benchmark/frameworks/verl/` | Mainstream verl-style GRPO comparison |
+
+Use the core trainer for production preference fine-tuning; use this suite when
+you need side-by-side numbers against common RL stacks.
+
 ## Supported frameworks
 
 | Framework | Algorithm | Use case | Entry |
@@ -21,7 +43,7 @@ Python dependencies are managed with uv; see [`docs/uv_env.md`](docs/uv_env.md).
 | **TRL** (HuggingFace) | GRPO / ORPO | Fastest prototype, HF ecosystem | `benchmark/frameworks/trl/` |
 | **OpenRLHF** | PPO (Actor/Ref/Reward) | Distributed RLHF-style | `benchmark/frameworks/openrlhf/` |
 | **verl** (HybridFlow) | GRPO (single-controller) | Industrial colocated RL | `benchmark/frameworks/verl/` |
-| **Native ORPO** | ORPO | In-repo baseline | `benchmark/frameworks/native_orpo/` |
+| **Native ORPO** | ORPO | In-repo baseline (`finetune.py`) | `benchmark/frameworks/native_orpo/` |
 
 ## Layout
 
@@ -136,6 +158,7 @@ Then update `data.train_path` / `data.eval_path` in the framework YAML.
 - [Framework comparison](docs/framework_comparison.md)
 - [Data format](docs/data_format.md)
 - [uv environment](docs/uv_env.md)
+- [Overview](docs/overview.md)
 
 ## Evaluation
 
