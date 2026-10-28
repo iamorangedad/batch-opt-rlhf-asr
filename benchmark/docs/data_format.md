@@ -1,8 +1,8 @@
-# 数据格式说明
+# Data format
 
-## 在线 RL：`*_rl.jsonl`
+## Online RL: `*_rl.jsonl`
 
-一行一个样本：
+One sample per line:
 
 ```json
 {
@@ -14,19 +14,17 @@
 }
 ```
 
-字段：
-
-| 字段 | 必需 | 说明 |
+| Field | Required | Description |
 |---|---|---|
-| `audio.path` / `audio_path` | 是 | 本地 wav/flac |
-| `reference` | 是 | 标准转写（奖励与评测） |
-| `language` | 否 | 默认配置语言 |
-| `duration` | 否 | 秒；过滤长短音频用 |
-| `id` | 否 | 追踪用 |
+| `audio.path` / `audio_path` | yes | Local wav/flac path |
+| `reference` | yes | Ground-truth transcript (reward + eval) |
+| `language` | no | Defaults to config language |
+| `duration` | no | Seconds; used to filter short/long clips |
+| `id` | no | Tracking id |
 
-## 离线偏好：`*_pref.jsonl`
+## Offline preference: `*_pref.jsonl`
 
-在 RL 字段基础上增加：
+Same as RL rows, plus:
 
 ```json
 {
@@ -40,14 +38,14 @@
 }
 ```
 
-兼容本仓库原有 ORPO `finetune.py` 读取格式。
+Compatible with the repo's original ORPO `finetune.py` format.
 
-## 生成方式
+## How to generate
 
 ```bash
-# 流水线 demo
+# Pipeline demo
 python benchmark/scripts/generate_demo_data.py
 
-# 从已有 JSONL / HF 数据集
+# From existing JSONL / HF datasets
 python benchmark/scripts/prepare_data.py --help
 ```
