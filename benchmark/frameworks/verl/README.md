@@ -1,64 +1,66 @@
-# verl（HybridFlow）风格流水线（Whisper ASR）
+# verl (HybridFlow)-style pipeline (Whisper ASR)
 
-verl（Volcano Engine RL）以 **单控制器 + colocated rollout/train 换引擎** 著称。  
-本基准实现一个 **相位清晰** 的 Whisper GRPO 控制器，对应 HybridFlow 的：
+verl (Volcano Engine RL) is known for a **single controller + colocated
+rollout/train engine swap**. This benchmark implements a **phase-clear** Whisper
+GRPO controller matching HybridFlow's:
 
 ```text
 rollout_phase → reward_phase → update_phase
 ```
 
-便于在同一套 ASR 数据/奖励上对比 verl 式调度与其它框架。
+so verl-style scheduling can be compared on the same ASR data and reward.
 
 ---
 
-## 1. 搭建测试环境（uv）
+## 1. Environment setup (uv)
 
 ```bash
 bash benchmark/frameworks/verl/setup_env.sh
-# 等价: uv sync
+# equivalent: uv sync
 
-source .venv/bin/activate   # 可选；也可用 uv run
+source .venv/bin/activate   # optional; or use uv run
 
-# 可选完整 verl（decoder-only + FSDP/Megatron + vLLM）
+# Optional full verl (decoder-only + FSDP/Megatron + vLLM)
 # uv pip install verl
 ```
 
 ---
 
-## 2. 准备测试脚本与数据
+## 2. Prepare scripts and data
 
 ```bash
 python benchmark/scripts/generate_demo_data.py
 ```
 
-配置：`benchmark/configs/frameworks/verl.yaml`  
-脚本：`train_grpo.py`、`run.sh`
+Config: `benchmark/configs/frameworks/verl.yaml`  
+Scripts: `train_grpo.py`, `run.sh`
 
 ---
 
-## 3. 如何进行测试
+## 3. How to run tests
 
-### 3.1 冒烟
+### 3.1 Smoke
 
 ```bash
 bash benchmark/frameworks/verl/run.sh smoke
 ```
 
-### 3.2 GRPO 训练
+### 3.2 GRPO training
 
 ```bash
 bash benchmark/frameworks/verl/run.sh grpo
 ```
 
-控制器逻辑（见 `SingleController`）：
+Controller logic (`SingleController`):
 
-1. **rollout_phase**：策略采样 G 条转写  
-2. **reward_phase**：WER/CER 奖励 + group-relative advantage  
-3. **update_phase**：策略梯度 + KL 到 reference  
+1. **rollout_phase**: sample G transcripts from the policy  
+2. **reward_phase**: WER/CER reward + group-relative advantage  
+3. **update_phase**: policy gradient + KL to reference  
 
-指标写入 `outputs/benchmark/verl/train_metrics.jsonl`，字段含 `"phase": "rollout->reward->update"`。
+Metrics go to `outputs/benchmark/verl/train_metrics.jsonl` with
+`"phase": "rollout->reward->update"`.
 
-### 3.3 对比
+### 3.3 Compare
 
 ```bash
 python benchmark/scripts/compare_results.py --outputs_dir outputs/benchmark
@@ -66,14 +68,15 @@ python benchmark/scripts/compare_results.py --outputs_dir outputs/benchmark
 
 ---
 
-## 与官方 verl 的关系
+## Relation to upstream verl
 
-| 能力 | 本适配器 | 官方 verl |
+| Capability | This adapter | Upstream verl |
 |---|---|---|
-| 控制模型 | 单控制器相位 API | HybridFlow 单控制器 |
-| 权重换布局 | 无（同引擎） | 3D-HybridEngine reshard |
-| Rollout 引擎 | HF generate | vLLM / SGLang |
-| 并行 | 单卡/简单 DDP 可扩 | FSDP2 / Megatron 3D |
-| Whisper | ✅ | 需自定义 worker |
+| Control model | single-controller phase API | HybridFlow single controller |
+| Weight reshard | none (same engine) | 3D-HybridEngine reshard |
+| Rollout engine | HF generate | vLLM / SGLang |
+| Parallelism | single GPU / simple DDP | FSDP2 / Megatron 3D |
+| Whisper | yes | needs custom worker |
 
-本适配器用于 **基准流程与算法对照**；上大规模 decoder-only ASR-LLM 时，把同一奖励函数接到 verl reward manager 即可。
+Use this adapter for **benchmark workflow and algorithm comparison**. For large
+decoder-only ASR-LLMs, attach the same reward function to verl's reward manager.
