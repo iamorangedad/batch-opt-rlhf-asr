@@ -1,45 +1,46 @@
-# Native ORPO（本仓库自带）
+# Native ORPO (in-repo baseline)
 
-基于仓库根目录 `finetune.py` + `src/orpo_trainer.py` 的 Whisper ORPO 实现，作为 **离线偏好优化基线**。
+Whisper ORPO based on root `finetune.py` + `src/orpo_trainer.py`, used as the
+**offline preference-optimization baseline**.
 
-## 1. 搭建环境（uv）
+## 1. Environment setup (uv)
 
 ```bash
 bash benchmark/frameworks/native_orpo/run.sh setup
-# 等价: uv sync
+# equivalent: uv sync
 ```
 
-## 2. 准备数据
+## 2. Prepare data
 
-偏好数据为 JSONL，每行：
+Preference JSONL, one object per line:
 
 ```json
 {"audio":{"path":"..."},"duration":1.2,"chosen":"correct transcript","rejected":"wrong transcript","language":"en"}
 ```
 
-生成 demo：
+Generate demo data:
 
 ```bash
 python benchmark/scripts/generate_demo_data.py
 ```
 
-## 3. 运行测试
+## 3. Run tests
 
 ```bash
-# 冒烟
+# smoke
 bash benchmark/frameworks/native_orpo/run.sh smoke
 
-# 正式训练
+# full train
 bash benchmark/frameworks/native_orpo/run.sh train
 ```
 
-## 4. 与其它框架对比
+## 4. Comparison with other frameworks
 
-| 项 | Native ORPO | TRL ORPO |
+| Item | Native ORPO | TRL ORPO |
 |---|---|---|
-| 算法 | ORPO | ORPO |
-| 数据 | chosen/rejected | chosen/rejected |
-| 入口 | `finetune.py` | `benchmark/frameworks/trl/train_orpo.py` |
-| 在线采样 | 否 | 否 |
+| Algorithm | ORPO | ORPO |
+| Data | chosen/rejected | chosen/rejected |
+| Entry | `finetune.py` | `benchmark/frameworks/trl/train_orpo.py` |
+| Online sampling | no | no |
 
-在线 RL（需要生成再打分）请用 TRL-GRPO / OpenRLHF-PPO / verl-GRPO。
+For online RL (generate then score), use TRL-GRPO / OpenRLHF-PPO / verl-GRPO.
