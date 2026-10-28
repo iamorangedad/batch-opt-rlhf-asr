@@ -22,6 +22,7 @@ from src.data_reader import CustomDataset
 from src.log import log_creater, StreamToLogger
 from src.utils import print_arguments, add_arguments
 from src.data_utils import DataCollatorSpeechSeq2SeqWithPadding
+from benchmark.common.cpu_memory import CpuMemoryTracker
 from benchmark.common.gpu_memory import GpuMemoryTracker
 
 # ===============================================================================
@@ -274,17 +275,25 @@ def main():
     # ================================= trainer  ====================================
     # ===============================================================================
     gpu_mem = GpuMemoryTracker()
+    cpu_mem = CpuMemoryTracker()
 
-    class GpuMemoryCallback(TrainerCallback):
-        def __init__(self, tracker: GpuMemoryTracker):
-            self.tracker = tracker
+    class MemoryCallback(TrainerCallback):
+        def __init__(self, gpu_tracker: GpuMemoryTracker, cpu_tracker: CpuMemoryTracker):
+            self.gpu_tracker = gpu_tracker
+            self.cpu_tracker = cpu_tracker
 
         def on_log(self, args, state, control, logs=None, **kwargs):
-            snap = self.tracker.sample()
-            if logs is not None and snap.get("gpu_available"):
-                logs["gpu_allocated_mb"] = snap["gpu_allocated_mb"]
-                logs["gpu_peak_allocated_mb"] = snap["gpu_peak_allocated_mb"]
-                logs["gpu_peak_reserved_mb"] = snap["gpu_peak_reserved_mb"]
+            if logs is None:
+                return control
+            gpu_snap = self.gpu_tracker.sample()
+            cpu_snap = self.cpu_tracker.sample()
+            if gpu_snap.get("gpu_available"):
+                logs["gpu_allocated_mb"] = gpu_snap["gpu_allocated_mb"]
+                logs["gpu_peak_allocated_mb"] = gpu_snap["gpu_peak_allocated_mb"]
+                logs["gpu_peak_reserved_mb"] = gpu_snap["gpu_peak_reserved_mb"]
+            logs["cpu_rss_mb"] = cpu_snap["cpu_rss_mb"]
+            logs["cpu_peak_rss_mb"] = cpu_snap["cpu_peak_rss_mb"]
+            logs["cpu_peak_rss_delta_mb"] = cpu_snap["cpu_peak_rss_delta_mb"]
             return control
 
     trainer = ORPOTrainer(
@@ -298,7 +307,7 @@ def main():
         data_collator=data_collator,
         # transformers Trainer renamed tokenizer -> processing_class
         processing_class=processor.feature_extractor,
-        callbacks=[GpuMemoryCallback(gpu_mem)],
+        callbacks=[MemoryCallback(gpu_mem, cpu_mem)],
     )
     model.config.use_cache = False
 
@@ -328,10 +337,11 @@ def main():
         "output_dir": output_dir,
     }
     mem_summary.update(gpu_mem.summary())
+    mem_summary.update(cpu_mem.summary())
     summary_path = os.path.join(output_dir, "summary.json")
     with open(summary_path, "w", encoding="utf-8") as f:
         json.dump(mem_summary, f, indent=2)
-    print(f"Wrote GPU memory summary to {summary_path}")
+    print(f"Wrote memory summary to {summary_path}")
     print(mem_summary)
 
 
