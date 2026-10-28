@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import argparse
 import functools
 import logging
@@ -15,11 +16,14 @@ from peft import (
     PeftModel,
     prepare_model_for_kbit_training,
 )
+from transformers import TrainerCallback
 from src.orpo_trainer import ORPOTrainer
 from src.data_reader import CustomDataset
 from src.log import log_creater, StreamToLogger
 from src.utils import print_arguments, add_arguments
 from src.data_utils import DataCollatorSpeechSeq2SeqWithPadding
+from benchmark.common.cpu_memory import CpuMemoryTracker
+from benchmark.common.gpu_memory import GpuMemoryTracker
 
 # ===============================================================================
 # ================================= log  =================================
@@ -175,12 +179,18 @@ def main():
     # ================================= whisper model  ==============================
     # ===============================================================================
     print("Loading whisper model...")
-    device_map = "auto"
+    load_kwargs = {
+        "local_files_only": args.local_files_only,
+    }
+    # Newer transformers reject load_in_8bit=False; only pass when enabled.
+    if args.use_8bit:
+        load_kwargs["load_in_8bit"] = True
+        load_kwargs["device_map"] = "auto"
+    elif torch.cuda.is_available():
+        load_kwargs["device_map"] = "auto"
     model = WhisperForConditionalGeneration.from_pretrained(
         args.base_model,
-        load_in_8bit=args.use_8bit,
-        device_map=device_map,
-        local_files_only=args.local_files_only,
+        **load_kwargs,
     )
     model.config.forced_decoder_ids = None
     model.config.suppress_tokens = []
@@ -235,15 +245,16 @@ def main():
     if args.base_model.endswith("/"):
         args.base_model = args.base_model[:-1]
     output_dir = os.path.join(args.output_dir, os.path.basename(args.base_model))
+    use_bf16 = bool(torch.cuda.is_available() and torch.cuda.is_bf16_supported())
     training_args = TrainingArguments(
         output_dir=output_dir,  # The output directory
         logging_steps=args.logging_steps,
         learning_rate=args.learning_rate,
-        overwrite_output_dir=True,  # overwrite the content of the output directory
         num_train_epochs=args.num_train_epochs,  # number of training epochs
         per_device_train_batch_size=args.per_device_train_batch_size,  # batch size for training
         per_device_eval_batch_size=args.per_device_eval_batch_size,  # batch size for evaluation
-        evaluation_strategy=args.evaluation_strategy if args.is_test else "no",
+        # transformers>=4.46 renamed evaluation_strategy -> eval_strategy
+        eval_strategy=args.evaluation_strategy if args.is_test else "no",
         save_strategy=args.evaluation_strategy,
         optim=args.optim,
         warmup_steps=args.warmup_steps,
@@ -257,12 +268,34 @@ def main():
         do_eval=args.is_test,
         lr_scheduler_type=args.lr_scheduler_type,
         remove_unused_columns=False,
-        bf16=True,
+        bf16=use_bf16,
         seed=args.seed,
     )
     # ===============================================================================
     # ================================= trainer  ====================================
     # ===============================================================================
+    gpu_mem = GpuMemoryTracker()
+    cpu_mem = CpuMemoryTracker()
+
+    class MemoryCallback(TrainerCallback):
+        def __init__(self, gpu_tracker: GpuMemoryTracker, cpu_tracker: CpuMemoryTracker):
+            self.gpu_tracker = gpu_tracker
+            self.cpu_tracker = cpu_tracker
+
+        def on_log(self, args, state, control, logs=None, **kwargs):
+            if logs is None:
+                return control
+            gpu_snap = self.gpu_tracker.sample()
+            cpu_snap = self.cpu_tracker.sample()
+            if gpu_snap.get("gpu_available"):
+                logs["gpu_allocated_mb"] = gpu_snap["gpu_allocated_mb"]
+                logs["gpu_peak_allocated_mb"] = gpu_snap["gpu_peak_allocated_mb"]
+                logs["gpu_peak_reserved_mb"] = gpu_snap["gpu_peak_reserved_mb"]
+            logs["cpu_rss_mb"] = cpu_snap["cpu_rss_mb"]
+            logs["cpu_peak_rss_mb"] = cpu_snap["cpu_peak_rss_mb"]
+            logs["cpu_peak_rss_delta_mb"] = cpu_snap["cpu_peak_rss_delta_mb"]
+            return control
+
     trainer = ORPOTrainer(
         model=model,
         alpha=args.alpha,
@@ -272,7 +305,9 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
         data_collator=data_collator,
-        tokenizer=processor.feature_extractor,
+        # transformers Trainer renamed tokenizer -> processing_class
+        processing_class=processor.feature_extractor,
+        callbacks=[MemoryCallback(gpu_mem, cpu_mem)],
     )
     model.config.use_cache = False
 
@@ -290,8 +325,24 @@ def main():
     trainer.save_state()
     print("save state done.")
     model.config.use_cache = True
-    model.save_pretrained(os.path.join(output_dir, "checkpoint-final"))
+    final_dir = os.path.join(output_dir, "checkpoint-final")
+    model.save_pretrained(final_dir)
     print("save model done.")
+    # Persist GPU memory summary next to training outputs for benchmark compares.
+    mem_summary = {
+        "framework": "native_orpo",
+        "algorithm": "orpo",
+        "steps": int(getattr(trainer.state, "global_step", 0) or 0),
+        "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "output_dir": output_dir,
+    }
+    mem_summary.update(gpu_mem.summary())
+    mem_summary.update(cpu_mem.summary())
+    summary_path = os.path.join(output_dir, "summary.json")
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump(mem_summary, f, indent=2)
+    print(f"Wrote memory summary to {summary_path}")
+    print(mem_summary)
 
 
 if __name__ == "__main__":

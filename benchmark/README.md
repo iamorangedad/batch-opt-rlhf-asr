@@ -156,6 +156,8 @@ Then update `data.train_path` / `data.eval_path` in the framework YAML.
 - [verl](frameworks/verl/README.md)
 - [Native ORPO](frameworks/native_orpo/README.md)
 - [Framework comparison](docs/framework_comparison.md)
+- [Latest comparison report](docs/comparison_report.md)
+- [CPU memory comparison](docs/cpu_memory_report.md)
 - [Data format](docs/data_format.md)
 - [uv environment](docs/uv_env.md)
 - [Overview](docs/overview.md)

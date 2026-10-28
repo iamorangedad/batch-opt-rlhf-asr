@@ -1,0 +1,27 @@
+framework: trl
+algorithm: orpo
+extends: ../base.yaml
+
+model:
+  name_or_path: openai/whisper-tiny
+  language: en
+  task: transcribe
+  use_lora: true
+
+data:
+  train_path: benchmark/data/librispeech_tiny/train_rl.jsonl
+  eval_path: benchmark/data/librispeech_tiny/eval_rl.jsonl
+  preference_train_path: benchmark/data/librispeech_tiny/train_pref.jsonl
+  preference_eval_path: benchmark/data/librispeech_tiny/eval_pref.jsonl
+
+orpo:
+  beta: 0.1
+
+training:
+  output_dir: outputs/benchmark/compare_trl_orpo
+  learning_rate: 1.0e-5
+  per_device_train_batch_size: 1
+  max_steps: 8
+  logging_steps: 1
+  bf16: false
+  fp16: false
