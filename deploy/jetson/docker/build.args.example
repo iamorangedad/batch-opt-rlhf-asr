@@ -1,0 +1,13 @@
+# Copy to build.args or export before compose build.
+# JP 5.1.x (L4T R35) — default in Dockerfile
+JETSON_BASE_IMAGE=nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3
+
+# JP 6.x examples (pick a tag that matches your board's L4T):
+# JETSON_BASE_IMAGE=nvcr.io/nvidia/l4t-jetpack:r36.2.0
+# JETSON_BASE_IMAGE=nvcr.io/nvidia/l4t-jetpack:r36.3.0
+#
+# When the base image does not include PyTorch, install a Jetson wheel
+# (see dusty-nv/jetson-containers) BEFORE pip-installing transformers/peft,
+# or switch the Dockerfile to a JP6 PyTorch image from NGC if available.
+IMAGE=batch-opt-rlhf-asr:jetson
+HF_CACHE=${HOME}/.cache/huggingface
