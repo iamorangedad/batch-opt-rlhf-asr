@@ -1,0 +1,74 @@
+# Whisper ORPO smoke Job for a single Jetson Orin node (k3s).
+#
+# Prerequisites:
+#   - Image built on the board (or multi-arch registry) as batch-opt-rlhf-asr:jetson
+#   - RuntimeClass/nvidia + NVIDIA device plugin (or k3s nvidia runtime)
+#   - Namespace / ConfigMap / PVC applied
+#
+# Local image import example:
+#   docker save batch-opt-rlhf-asr:jetson | sudo k3s ctr images import -
+#
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: whisper-orpo-smoke
+  namespace: asr-jetson
+  labels:
+    app.kubernetes.io/name: batch-opt-rlhf-asr
+    app.kubernetes.io/component: smoke
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: batch-opt-rlhf-asr
+        app.kubernetes.io/component: smoke
+    spec:
+      runtimeClassName: nvidia
+      restartPolicy: Never
+      # Pin to Orin nodes when the lab has mixed hardware:
+      # nodeSelector:
+      #   nvidia.com/gpu.product: Orin
+      #   # or your custom label: jetson.board=orin-nano
+      containers:
+        - name: asr-smoke
+          image: batch-opt-rlhf-asr:jetson
+          imagePullPolicy: IfNotPresent
+          args: ["smoke"]
+          env:
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: compute,utility,video
+            - name: HF_HOME
+              value: /data/hf-cache
+            - name: TRANSFORMERS_CACHE
+              value: /data/hf-cache
+            - name: OUTPUT_DIR
+              value: /data/outputs/jetson
+            - name: WORKDIR
+              value: /workspace
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              memory: 7Gi
+              cpu: "4"
+            requests:
+              nvidia.com/gpu: 1
+              memory: 4Gi
+              cpu: "2"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: jetson-config
+              mountPath: /workspace/deploy/jetson/configs/jetson_orin_nano.yaml
+              subPath: jetson_orin_nano.yaml
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: jetson-asr-data
+        - name: jetson-config
+          configMap:
+            name: jetson-orin-config
