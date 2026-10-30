@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jetson-orin-config
+  namespace: asr-jetson
+  labels:
+    app.kubernetes.io/name: batch-opt-rlhf-asr
+data:
+  # Mirrored from deploy/jetson/configs/jetson_orin_nano.yaml for cluster use.
+  jetson_orin_nano.yaml: |
+    model:
+      name_or_path: openai/whisper-tiny
+      language: en
+      task: transcribe
+      use_lora: true
+      lora_r: 8
+      lora_alpha: 16
+      lora_dropout: 0.05
+      target_modules: [q_proj, v_proj, k_proj, out_proj]
+    data:
+      train_path: benchmark/data/demo/train_rl.jsonl
+      eval_path: benchmark/data/demo/eval_rl.jsonl
+      preference_train_path: benchmark/data/demo/train_pref.jsonl
+      preference_eval_path: benchmark/data/demo/eval_pref.jsonl
+      sample_rate: 16000
+      max_audio_seconds: 15
+      min_audio_seconds: 0.5
+    training:
+      output_dir: /data/outputs/jetson
+      seed: 42
+      learning_rate: 1.0e-3
+      num_train_epochs: 1
+      per_device_train_batch_size: 1
+      gradient_accumulation_steps: 8
+      warmup_steps: 5
+      logging_steps: 1
+      save_steps: 20
+      eval_steps: 20
+      max_steps: 40
+      bf16: false
+      fp16: true
+      gradient_checkpointing: true
+    eval:
+      metrics: [wer, cer]
+      max_new_tokens: 64

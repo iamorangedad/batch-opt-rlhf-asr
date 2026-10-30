@@ -1,0 +1,39 @@
+# Build context is the repository root (../.. from this file).
+# Usage (from repo root):
+#   docker compose -f deploy/jetson/docker/docker-compose.yml build
+#   docker compose -f deploy/jetson/docker/docker-compose.yml run --rm asr-jetson smoke
+#
+# Or: bash deploy/jetson/scripts/build_and_run.sh smoke
+
+name: batch-opt-rlhf-asr-jetson
+
+services:
+  asr-jetson:
+    build:
+      context: ../../..
+      dockerfile: deploy/jetson/docker/Dockerfile
+      args:
+        # Match host JetPack. JP6 users should override, e.g.:
+        # JETSON_BASE_IMAGE=nvcr.io/nvidia/l4t-jetpack:r36.2.0
+        JETSON_BASE_IMAGE: ${JETSON_BASE_IMAGE:-nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3}
+    image: ${IMAGE:-batch-opt-rlhf-asr:jetson}
+    runtime: nvidia
+    network_mode: host
+    working_dir: /workspace
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+      - HF_HOME=/data/hf-cache
+      - TRANSFORMERS_CACHE=/data/hf-cache
+      - OUTPUT_DIR=/data/outputs/jetson
+      - WORKDIR=/workspace
+    volumes:
+      # Live-edit code without rebuild (optional; image already contains a copy)
+      - ../../..:/workspace
+      - ${HF_CACHE:-${HOME}/.cache/huggingface}:/data/hf-cache
+      - ../../../outputs:/data/outputs
+    # Default CMD from Dockerfile is "smoke"; override: ... run asr-jetson train
+    command: ["smoke"]
+    shm_size: "1gb"
+    # Unified memory on Jetson: avoid overcommitting CPU threads
+    # cpus / mem_limit are optional; leave unset unless you need isolation

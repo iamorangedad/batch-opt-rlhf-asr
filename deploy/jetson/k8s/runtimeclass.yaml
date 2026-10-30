@@ -1,0 +1,8 @@
+# Requires NVIDIA Container Toolkit configured as the default/cri runtime
+# for k3s, or containerd config that registers the "nvidia" runtime.
+# See: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: nvidia
+handler: nvidia

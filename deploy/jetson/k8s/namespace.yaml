@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: asr-jetson
+  labels:
+    app.kubernetes.io/name: batch-opt-rlhf-asr
+    app.kubernetes.io/component: jetson-test

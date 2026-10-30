@@ -1,0 +1,32 @@
+# Local-path PVC for HF cache + outputs on a single-node k3s Jetson.
+# On multi-node clusters, switch to an RWX volume or node-local hostPath.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jetson-asr-data
+  namespace: asr-jetson
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 40Gi
+  # Uncomment if your k3s uses the local-path provisioner explicitly:
+  # storageClassName: local-path
+---
+# Optional hostPath PV for boards without a dynamic provisioner.
+# Apply only if the PVC above stays Pending.
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: jetson-asr-data-pv
+# spec:
+#   capacity:
+#     storage: 40Gi
+#   accessModes:
+#     - ReadWriteOnce
+#   persistentVolumeReclaimPolicy: Retain
+#   storageClassName: manual
+#   hostPath:
+#     path: /mnt/asr-jetson-data
+#     type: DirectoryOrCreate
