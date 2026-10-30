@@ -1,0 +1,57 @@
+# Low-memory overlay for Jetson Orin Nano / NX smoke & short fine-tunes.
+# Merge conceptually with benchmark/configs/base.yaml (same keys).
+#
+# Target: ~8 GB unified memory, whisper-tiny + LoRA, FP16.
+
+model:
+  name_or_path: openai/whisper-tiny
+  language: en
+  task: transcribe
+  use_lora: true
+  lora_r: 8
+  lora_alpha: 16
+  lora_dropout: 0.05
+  target_modules: [q_proj, v_proj, k_proj, out_proj]
+
+data:
+  train_path: benchmark/data/demo/train_rl.jsonl
+  eval_path: benchmark/data/demo/eval_rl.jsonl
+  preference_train_path: benchmark/data/demo/train_pref.jsonl
+  preference_eval_path: benchmark/data/demo/eval_pref.jsonl
+  sample_rate: 16000
+  max_audio_seconds: 15
+  min_audio_seconds: 0.5
+
+reward:
+  wer_weight: 0.7
+  cer_weight: 0.3
+  length_penalty: 0.05
+  repetition_penalty: 0.1
+
+training:
+  output_dir: outputs/jetson
+  seed: 42
+  learning_rate: 1.0e-3
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 8
+  warmup_steps: 5
+  logging_steps: 1
+  save_steps: 20
+  eval_steps: 20
+  max_steps: 40
+  bf16: false
+  fp16: true
+  gradient_checkpointing: true
+
+eval:
+  metrics: [wer, cer]
+  max_new_tokens: 64
+
+# Device notes (documentation only; not consumed by all runners):
+device:
+  platform: jetson-orin
+  recommended_boards: [orin-nano-8gb, orin-nx]
+  avoid_frameworks_on_nano: [openrlhf_ray]
+  optimizer: adamw_torch
+  num_workers: 0
