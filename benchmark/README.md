@@ -62,6 +62,18 @@ benchmark/
 └── scripts/                  # data prep, eval, one-shot compare
 ```
 
+## Jetson Orin (GPU)
+
+Cloud Agents are CPU-only. For real VRAM / WER numbers on **NVIDIA Jetson Orin**:
+
+```bash
+bash scripts/setup_jetson_orin.sh
+uv run python benchmark/scripts/run_gpu_memory_compare.py
+```
+
+Details: [docs/jetson_orin.md](docs/jetson_orin.md). Memory-conservative configs live
+under `benchmark/configs/frameworks/jetson_*.yaml`.
+
 ## Quick start
 
 ### 0. Set up with uv
@@ -70,6 +82,7 @@ benchmark/
 curl -LsSf https://astral.sh/uv/install.sh | sh && source "$HOME/.local/bin/env"
 bash scripts/setup_uv.sh all
 # per framework: bash scripts/setup_uv.sh trl|openrlhf|verl
+# Jetson Orin (aarch64): bash scripts/setup_jetson_orin.sh
 ```
 
 ### 1. Generate demo data
@@ -99,6 +112,16 @@ bash benchmark/scripts/run_benchmark.sh smoke trl,openrlhf,verl
 
 ```bash
 uv run python benchmark/scripts/compare_results.py --outputs_dir outputs/benchmark
+```
+
+### 4. Memory comparison (isolated processes)
+
+```bash
+# CPU peak RSS (works on Cloud Agents)
+uv run python benchmark/scripts/run_cpu_memory_compare.py
+
+# GPU peak VRAM (requires CUDA — use Jetson Orin)
+uv run python benchmark/scripts/run_gpu_memory_compare.py
 ```
 
 Each framework writes:
@@ -156,6 +179,10 @@ Then update `data.train_path` / `data.eval_path` in the framework YAML.
 - [verl](frameworks/verl/README.md)
 - [Native ORPO](frameworks/native_orpo/README.md)
 - [Framework comparison](docs/framework_comparison.md)
+- [Latest comparison report](docs/comparison_report.md)
+- [CPU memory comparison](docs/cpu_memory_report.md)
+- [GPU memory comparison](docs/gpu_memory_report.md)
+- [Jetson Orin test environment](docs/jetson_orin.md)
 - [Data format](docs/data_format.md)
 - [uv environment](docs/uv_env.md)
 - [Overview](docs/overview.md)

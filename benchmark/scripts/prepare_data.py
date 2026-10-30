@@ -30,10 +30,16 @@ from benchmark.common.data import (
 
 
 def from_hf(args) -> list[ASRSample]:
-    from datasets import load_dataset
+    import io
+
+    from datasets import Audio, load_dataset
+    import numpy as np
     import soundfile as sf
 
     ds = load_dataset(args.hf_dataset, args.hf_config, split=args.hf_split, streaming=False)
+    # Decode with soundfile to avoid requiring torchcodec for Audio features.
+    if "audio" in ds.column_names:
+        ds = ds.cast_column("audio", Audio(sampling_rate=16000, decode=False))
     if args.max_samples:
         ds = ds.select(range(min(args.max_samples, len(ds))))
 
@@ -43,10 +49,22 @@ def from_hf(args) -> list[ASRSample]:
     for i, row in enumerate(ds):
         text = row.get("text") or row.get("sentence") or row.get("transcription") or ""
         audio = row["audio"]
-        array = audio["array"]
-        sr = int(audio["sampling_rate"])
+        if isinstance(audio, dict) and audio.get("bytes") is not None:
+            array, sr = sf.read(io.BytesIO(audio["bytes"]), dtype="float32")
+        elif isinstance(audio, dict) and audio.get("path"):
+            array, sr = sf.read(audio["path"], dtype="float32")
+        else:
+            array = audio["array"]
+            sr = int(audio["sampling_rate"])
+        if getattr(array, "ndim", 1) > 1:
+            array = np.mean(array, axis=1)
+        if int(sr) != 16000:
+            import librosa
+
+            array = librosa.resample(array, orig_sr=int(sr), target_sr=16000)
+            sr = 16000
         wav_path = out_audio / f"{args.hf_split.replace('.', '_')}_{i:06d}.wav"
-        sf.write(str(wav_path), array, sr)
+        sf.write(str(wav_path), array, int(sr))
         duration = float(len(array) / sr)
         # Build a simple rejected hypothesis by token shuffle for ORPO demos.
         toks = text.strip().split()
