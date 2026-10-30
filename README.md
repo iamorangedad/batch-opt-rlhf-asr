@@ -215,6 +215,24 @@ reward protocol.
 See **[`benchmark/README.md`](benchmark/README.md)** for setup, workflows, and
 comparison docs. It is not required to train with `finetune.py`.
 
+## Optional: Jetson Orin GPU test environment (Docker / Kubernetes)
+
+For on-device smoke tests and short fine-tunes on **NVIDIA Jetson Orin**
+(Orin Nano / NX), see **[`deploy/jetson/README.md`](deploy/jetson/README.md)**.
+
+That tree provides:
+
+- Host prep + GPU check scripts
+- L4T-matched Dockerfile and Compose (NVIDIA runtime)
+- k3s manifests (RuntimeClass, PVC, smoke Job)
+- Low-memory config overlay for Orin Nano–class boards
+
+```bash
+# On the Jetson board
+bash deploy/jetson/scripts/prepare_host.sh
+bash deploy/jetson/scripts/build_and_run.sh smoke
+```
+
 ## Contributing
 
 1. Fork the repository
